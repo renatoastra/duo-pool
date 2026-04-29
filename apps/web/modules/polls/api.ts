@@ -5,14 +5,6 @@ import { orpc } from "@/lib/orpc-client";
 
 // TanStack Query hooks for polls. This file owns query invalidation —
 // components only do UI feedback. (Same rule as duo-admin starter.)
-//
-// ⚠️ useVote() is RESERVED FOR LIVE DEMO — see CLAUDE.md. The stub below
-// preserves the call-site shape (so <VoteScreen> can be built and tested
-// today) but rejects with a recognizable "not implemented" error. The live
-// demo replaces the mutationFn with the real `orpc.polls.vote(...)` call.
-
-export const VOTE_NOT_IMPLEMENTED_MESSAGE =
-  "polls.vote not implemented yet — reserved for live demo";
 
 export function usePolls() {
   return useQuery({
@@ -53,31 +45,21 @@ export function useHasVoted(slug: string | undefined) {
 }
 
 interface VoteInput {
-  pollId: string;
+  slug: string;
   pollOptionId: string;
 }
 
-/**
- * useVote() — RESERVED LIVE-DEMO SLOT.
- *
- * Until `polls.vote` is wired (live, on stage, via /duo.exec), this stub
- * returns a mutation whose mutationFn rejects with VOTE_NOT_IMPLEMENTED_MESSAGE.
- * Consumers (`<VoteScreen>`) MUST catch this specific error and degrade
- * gracefully so the rest of the redesign is reviewable end-to-end.
- *
- * Post-talk: replace the mutationFn body with `orpc.polls.vote(input)` and
- * keep the same invalidation behavior.
- */
 export function useVote() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (_input: VoteInput) => {
-      throw new Error(VOTE_NOT_IMPLEMENTED_MESSAGE);
-    },
-    onSuccess: () => {
-      // Invalidation lives in api.ts (per duo-admin rule).
-      queryClient.invalidateQueries({ queryKey: ["polls", "results"] });
-      queryClient.invalidateQueries({ queryKey: ["polls", "hasVoted"] });
+    mutationFn: (input: VoteInput) => orpc.polls.vote(input),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["polls", "results", variables.slug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["polls", "hasVoted", variables.slug],
+      });
     },
   });
 }

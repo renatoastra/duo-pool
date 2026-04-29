@@ -16,7 +16,6 @@ describe("pollsContract", () => {
     const okParse = inputSchema?.safeParse({
       slug: "demo-poll",
       pollOptionId: "11111111-1111-1111-1111-111111111111",
-      voterCookie: "voter-1",
     });
     expect(okParse?.success).toBe(true);
 

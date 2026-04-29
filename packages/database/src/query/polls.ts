@@ -124,11 +124,14 @@ export async function castVote(
   } catch (error) {
     // ADR-003: UNIQUE (voter_cookie, poll_id) is the source of truth — let
     // the constraint speak (no SELECT pre-check) and translate 23505 here.
+    // Match the constraint name so other unique violations bubble up.
     if (
       typeof error === "object" &&
       error !== null &&
       "code" in error &&
-      (error as { code: unknown }).code === "23505"
+      (error as { code: unknown }).code === "23505" &&
+      (error as { constraint?: string }).constraint ===
+        "votes_voter_poll_unique"
     ) {
       return { alreadyVoted: true };
     }

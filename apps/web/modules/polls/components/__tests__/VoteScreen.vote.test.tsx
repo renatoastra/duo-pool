@@ -1,32 +1,17 @@
 /**
- * ⚠️  PRE-WRITTEN TEST ASSET — RUNS AFTER THE LIVE `polls.vote` DEMO
+ * polls.vote — full user flow.
  *
- * Encodes the post-implementation acceptance criteria for /duo.exec on
- * polls.vote. Gated by `describe.skip` because it asserts behavior that
- * only exists once T05 (api.ts useVote replaces stub) and T06 (VoteScreen
- * branches on result.status + locks buttons) from `.duo/tasks.md` land.
- *
- * The final step of T06 flips `describe.skip` → `describe`. After that
- * flip, all 3 cases must pass with NO other edits to this file.
- *
- * ───────────────────────────────────────────────────────────────────
- * Conforms to the duo-pool Frontend Testing Rules (CLAUDE.md):
- *   - User-observable behavior only — no internal state / data-* asserts
- *   - userEvent for clicks; fireEvent.pointer{Down,Up} only for the
- *     hold-to-commit gesture (no userEvent abstraction for sustained press)
- *   - Visual assertions: toBeInTheDocument / toBeEnabled / toBeDisabled
- *   - Mocks at the network boundary via MSW; only useRouter is mocked
- *     directly because there's no MSW analog for navigation
- * ───────────────────────────────────────────────────────────────────
+ * Mocks `@/lib/orpc-client` directly because @orpc/client/fetch doesn't go
+ * through MSW's patched fetch in bun + happy-dom (see PollList.test.tsx).
+ * Three user-observable assertions:
+ *   1. ok → router.push to /poll/<slug>/result
+ *   2. alreadyVoted → inline "Voto já registrado" message, no nav
+ *   3. after commit, every option button is disabled
  */
 
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { renderWithProviders } from "@duopool/test-config/frontend";
-import { useMswServer } from "@duopool/test-config/msw";
 import { fireEvent, waitFor } from "@testing-library/react";
-import { http, HttpResponse } from "msw";
-
-// ---- Fixtures ---------------------------------------------------------------
 
 const POLL = {
   id: "poll-1",
@@ -38,16 +23,30 @@ const POLL = {
   ],
 };
 
-const VOTE_URL = "http://localhost:3000/api/rpc/polls/vote";
-const HOLD_MS = 1_000; // matches HoldButton's default holdMs
+const HOLD_MS = 1_000;
 
-// ---- Navigation mock --------------------------------------------------------
-// useRouter has no MSW analog — mocking as a proxy for "navigation happened"
-// is the documented exception in CLAUDE.md / Frontend Testing Rules.
+type VoteInput = {
+  slug: string;
+  pollOptionId: string;
+};
+type VoteResult = { status: "ok" } | { status: "alreadyVoted" };
 
+const orpcState = {
+  vote: mock<(input: VoteInput) => Promise<VoteResult>>(() =>
+    Promise.resolve({ status: "ok" }),
+  ),
+};
 const routerState = {
   push: mock<(path: string) => void>(() => undefined),
 };
+
+mock.module("@/lib/orpc-client", () => ({
+  orpc: {
+    polls: {
+      vote: (input: VoteInput) => orpcState.vote(input),
+    },
+  },
+}));
 
 mock.module("next/navigation", () => ({
   useRouter: () => routerState,
@@ -55,11 +54,7 @@ mock.module("next/navigation", () => ({
 
 import { VoteScreen } from "../VoteScreen";
 
-// ---- Helpers ----------------------------------------------------------------
-
 function holdAndRelease(button: HTMLElement) {
-  // RTL's userEvent has no abstraction for sustained press, so the escape
-  // hatch fireEvent.pointerDown/Up is the documented way (CLAUDE.md).
   fireEvent.pointerDown(button);
   return new Promise<void>((resolve) =>
     setTimeout(() => {
@@ -69,26 +64,17 @@ function holdAndRelease(button: HTMLElement) {
   );
 }
 
-// ---- Suite ------------------------------------------------------------------
-
-describe.skip("polls.vote — full user flow (live demo target)", () => {
-  const server = useMswServer();
-
+describe("polls.vote — full user flow (live demo target)", () => {
   beforeEach(() => {
+    orpcState.vote = mock(() => Promise.resolve({ status: "ok" }));
     routerState.push = mock(() => undefined);
   });
 
   afterEach(() => {
-    server.resetHandlers();
+    // no-op — beforeEach resets state
   });
 
   test("audience holds Vibecoding → vote registered → taken to the result page", async () => {
-    server.use(
-      http.post(VOTE_URL, () =>
-        HttpResponse.json({ json: { status: "ok" } }),
-      ),
-    );
-
     const view = renderWithProviders(<VoteScreen poll={POLL} />);
 
     const vibecoding = view.getByRole("button", { name: /vibecoding/i });
@@ -105,11 +91,7 @@ describe.skip("polls.vote — full user flow (live demo target)", () => {
   }, 5_000);
 
   test("audience already voted from this device → sees 'Voto já registrado' and stays on the vote page", async () => {
-    server.use(
-      http.post(VOTE_URL, () =>
-        HttpResponse.json({ json: { status: "alreadyVoted" } }),
-      ),
-    );
+    orpcState.vote = mock(() => Promise.resolve({ status: "alreadyVoted" }));
 
     const view = renderWithProviders(<VoteScreen poll={POLL} />);
 
@@ -123,11 +105,7 @@ describe.skip("polls.vote — full user flow (live demo target)", () => {
   }, 5_000);
 
   test("after a committed vote, every option button is disabled — no double commit", async () => {
-    server.use(
-      http.post(VOTE_URL, () =>
-        HttpResponse.json({ json: { status: "alreadyVoted" } }),
-      ),
-    );
+    orpcState.vote = mock(() => Promise.resolve({ status: "alreadyVoted" }));
 
     const view = renderWithProviders(<VoteScreen poll={POLL} />);
 

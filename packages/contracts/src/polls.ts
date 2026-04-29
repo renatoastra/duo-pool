@@ -52,8 +52,7 @@ export const pollsContract = {
     .input(
       z.object({
         slug: z.string().min(1),
-        pollOptionId: z.string().uuid(),
-        voterCookie: z.string().min(1),
+        pollOptionId: z.string().min(1),
       }),
     )
     .output(
