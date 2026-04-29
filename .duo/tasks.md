@@ -1,6 +1,6 @@
 # Tasks — `polls.vote` feature
 
-**Source:** `.duo/plan.md` (rehearsal pass on `rehearsal/live-demo-vote`)
+**Source:** `.duo/plan.md` (live demo pass on `demo/polls-vote`)
 **Total:** 6 tasks. Strictly sequential — earlier layers gate later ones (ADR-001 5-Layer Data Flow). Each task lists the AC IDs it satisfies; `bun verify` is the gate after every task.
 
 ---

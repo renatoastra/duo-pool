@@ -1,6 +1,6 @@
 # Plan — `polls.vote` feature
 
-**Branch:** `rehearsal/live-demo-vote` (rehearsal of the live `/duo.exec` run)
+**Branch:** `demo/polls-vote` (live `/duo.exec` run)
 **Date:** 2026-04-29 (talk day)
 **Target:** Implement the only remaining slot reserved for the live demo. Everything else (schema, drizzle-zod, contracts package, router slot, frontend module, redesign, theme, motion) is already in `main`.
 
