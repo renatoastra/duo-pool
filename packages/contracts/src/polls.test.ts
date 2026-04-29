@@ -9,7 +9,7 @@ describe("pollsContract", () => {
     expect(pollsContract.hasVoted).toBeDefined();
   });
 
-  test("does NOT expose vote — reserved for live demo", () => {
-    expect("vote" in pollsContract).toBe(false);
+  test("exposes vote", () => {
+    expect(pollsContract.vote).toBeDefined();
   });
 });
