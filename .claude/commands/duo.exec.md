@@ -158,7 +158,63 @@ Cada tarefa é roteada para o contexto mais eficiente:
 
 ---
 
-## Passo 3: Execução Tarefa por Tarefa
+## Passo 2.5: Roteamento de Domínio (duo-pool)
+
+Antes de executar, **agrupe as tarefas por domínio com base no path do arquivo principal**:
+
+| Path do arquivo | Domínio | Specialist |
+|---|---|---|
+| `packages/database/**`, `packages/contracts/**`, `packages/api/**` | **backend** | `backend-specialist` |
+| `apps/web/**` | **frontend** | `frontend-specialist` |
+| Toca os dois domínios numa task atômica | mixed | sessão principal |
+
+**Dispatch em paralelo via `Agent` tool com `isolation: "worktree"` e `run_in_background: true`:**
+
+```ts
+// Wave A — backend specialist (rola sequencial dentro do domínio)
+Agent({
+  description: "Backend domain — T01..T04",
+  subagent_type: "backend-specialist",
+  isolation: "worktree",
+  run_in_background: true,
+  prompt: "Execute as tasks T01, T02, T03, T04 de .duo/tasks.md sequencialmente. Branch a partir de main. Após cada task, scoped verify. Após T04, bun verify completo. Reporte branch + commits + AC IDs satisfeitos."
+})
+
+// Wave B — frontend specialist (depende de T02 + T04 mergearem em main)
+// Despacha SÓ depois que Wave A terminar e mergear, OU se Wave A já terminou T02
+// e o frontend só precisa dos tipos do contract.
+Agent({
+  description: "Frontend domain — T05..T06",
+  subagent_type: "frontend-specialist",
+  isolation: "worktree",
+  run_in_background: true,
+  prompt: "Execute T05, T06 de .duo/tasks.md. Depende dos tipos de packages/contracts (vote contract). Branch a partir de main após Wave A mergear. Reporte branch + commits + AC IDs."
+})
+
+// Reviewer — em paralelo, consome diffs conforme aparecem
+Agent({
+  description: "Code reviewer — diff vs main",
+  subagent_type: "code-reviewer",
+  run_in_background: true,
+  prompt: "Revise os commits feitos pelos backend-specialist e frontend-specialist contra CLAUDE.md, ADRs e Frontend Testing Rules. Foque em: (1) 5-Layer Flow respeitado, (2) UNIQUE constraint via INSERT+catch (ADR-003), (3) cookie lido de context.voterId não de input, (4) Frontend Testing Rules (MSW, userEvent, asserts visuais). Reporte CRITICAL / HIGH / MEDIUM."
+})
+```
+
+**Sequência de waves:**
+
+1. **Wave A** dispatcha primeiro. Aguarda completion.
+2. Após Wave A terminar com sucesso → **merge da branch do backend-specialist em main** (fast-forward ou no-ff conforme conveniência).
+3. **Wave B** dispatcha depois do merge da Wave A (frontend precisa dos tipos do L4 contract). Aguarda completion.
+4. **Reviewer** roda em paralelo às Wave A e B (background) — pings de review chegam como system-reminders no turno seguinte.
+5. Após Wave B mergear → `bun verify` final em main.
+
+**Se a task envolve "mixed domain"** (raro), execute na sessão principal seguindo o fluxo sequencial (Passo 3) — não despache specialist.
+
+---
+
+## Passo 3: Execução Tarefa por Tarefa (fallback — sessão principal)
+
+> Use este passo APENAS se a task é mixed-domain ou se um specialist falhar e precisar de retomada manual. Para tasks roteáveis, prefira o Passo 2.5.
 
 ### 3a. Detectar Resume
 

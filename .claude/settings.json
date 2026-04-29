@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/scripts/verify-on-edit.sh",
+            "asyncRewake": true,
+            "rewakeSummary": "scoped bun type-check failed after edit",
+            "rewakeMessage": "The post-edit type-check hook failed. Output:"
+          }
+        ]
+      }
+    ]
+  }
+}
