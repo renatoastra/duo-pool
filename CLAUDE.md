@@ -204,18 +204,6 @@ bun test apps/web/modules/polls/__tests__/PollList.test.tsx   Single test file
 - Never add Hono unless we add a non-oRPC HTTP handler that needs it (we currently don't)
 - Never accept Next.js < 16 (CVE-2025-29927)
 
-## ⚠️ Reserved for the live demo (DO NOT IMPLEMENT)
-
-The feature `polls.vote` is implemented LIVE on stage during the talk via `/duo.exec`. The following code paths are intentionally empty in this scaffold and **MUST NOT** be filled in by automated runs unless the operator explicitly asks for the live execution:
-
-- L3 query: `castVote()` in `packages/database/src/query/polls.ts`
-- L4 contract: `pollsContract.vote` in `packages/contracts/src/polls.ts`
-- L5 procedure: `voteProc` in `packages/api/src/modules/polls/procedures/vote.ts` (file does not exist)
-- Frontend api: `useVote()` in `apps/web/modules/polls/api.ts`
-- Frontend UI: vote button onClick in `apps/web/modules/polls/components/PollPage.tsx`
-
-The architecture, schema (with `UNIQUE (voter_cookie, poll_id)`), and surrounding infrastructure are all in place — the live demo just fills in these 5 specific spots, validating that a deterministic repository + the 5-Layer Flow lets an AI agent produce code that respects the architecture.
-
 ## Quality gates (mandatory per phase)
 
 Every phase of work ends with `bun verify` exiting 0. The command runs `turbo type-check lint test` in parallel across all packages. A phase is NOT done if any of the gates is red.
@@ -244,8 +232,6 @@ Pre-existing tests written before this rule (`PollList.test.tsx`, `HoldButton.te
 **Test infra gotchas (learned the hard way):**
 - Schema-specific test helpers belong with the schema package (`packages/database`), not in `@duopool/test-config`. Only generic, environment-level infra goes in the shared package.
 - Don't wrap `mock.module()` in a helper that lives in a different package than the test — Bun resolves the spec at the call site, so a wrapper in `@duopool/test-config` will fail to mock a module imported from `apps/web`.
-
-**Live demo TDD asset:** `packages/database/src/query/polls.castVote.test.ts` is a pre-written, currently-skipped test suite for the feature that gets implemented during `/duo.exec` on stage. The skip is runtime-guarded so `bun verify` stays green until the live demo. After implementation, all 4 cases run. See ADR-006.
 
 ## Architectural decisions (ADRs)
 
