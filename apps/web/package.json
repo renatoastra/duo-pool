@@ -1,0 +1,59 @@
+{
+  "name": "@duopool/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "biome lint .",
+    "type-check": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@duopool/api": "workspace:*",
+    "@duopool/contracts": "workspace:*",
+    "@duopool/database": "workspace:*",
+    "@duopool/motion": "workspace:*",
+    "@orpc/client": "^1.0.0",
+    "@orpc/contract": "^1.0.0",
+    "@orpc/server": "^1.0.0",
+    "@orpc/tanstack-query": "^1.0.0",
+    "@radix-ui/react-slot": "^1.1.1",
+    "@tanstack/react-query": "^5.62.7",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "next": "16.2.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tailwind-merge": "^2.5.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@duopool/mocks": "workspace:*",
+    "@duopool/test-config": "workspace:*",
+    "@happy-dom/global-registrator": "^15.11.7",
+    "msw": "^2.6.8",
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "happy-dom": "^15.11.7",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "ignoreScripts": [
+    "sharp",
+    "unrs-resolver"
+  ],
+  "trustedDependencies": [
+    "sharp",
+    "unrs-resolver"
+  ]
+}
