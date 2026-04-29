@@ -1,5 +1,13 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterAll, describe, expect, mock, test } from "bun:test";
 import { renderWithProviders } from "@duopool/test-config/frontend";
+
+// Restore mock.module after this file's tests finish, so the next test file
+// (e.g. VoteScreen.vote.test.tsx, which uses the REAL @/modules/polls/api +
+// MSW) doesn't inherit a leaked stub. Bun's mock.module is process-scoped
+// and DOES leak across files without an explicit cleanup.
+afterAll(() => {
+  mock.restore();
+});
 
 // Mock the api module BEFORE importing the component, mirroring the
 // pattern used in apps/web/modules/polls/components/PollList.test.tsx.

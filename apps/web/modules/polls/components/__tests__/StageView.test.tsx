@@ -1,5 +1,12 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterAll, describe, expect, mock, test } from "bun:test";
 import { renderWithProviders } from "@duopool/test-config/frontend";
+
+// Restore mock.module after this file finishes — same rationale as
+// ResultStage.test.tsx (Bun's mock.module is process-scoped and leaks
+// across files without explicit cleanup).
+afterAll(() => {
+  mock.restore();
+});
 
 type ResultsShape = {
   pollId: string;

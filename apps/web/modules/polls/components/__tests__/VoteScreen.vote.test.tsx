@@ -71,7 +71,7 @@ function holdAndRelease(button: HTMLElement) {
 
 // ---- Suite ------------------------------------------------------------------
 
-describe.skip("polls.vote — full user flow (live demo target)", () => {
+describe("polls.vote — full user flow (live demo target)", () => {
   const server = useMswServer();
 
   beforeEach(() => {
@@ -97,11 +97,14 @@ describe.skip("polls.vote — full user flow (live demo target)", () => {
 
     await holdAndRelease(vibecoding);
 
-    await waitFor(() => {
-      expect(routerState.push).toHaveBeenCalledWith(
-        `/poll/${POLL.slug}/result`,
-      );
-    });
+    await waitFor(
+      () => {
+        expect(routerState.push).toHaveBeenCalledWith(
+          `/poll/${POLL.slug}/result`,
+        );
+      },
+      { timeout: 3_000 },
+    );
   }, 5_000);
 
   test("audience already voted from this device → sees 'Voto já registrado' and stays on the vote page", async () => {
@@ -116,9 +119,12 @@ describe.skip("polls.vote — full user flow (live demo target)", () => {
     const vibecoding = view.getByRole("button", { name: /vibecoding/i });
     await holdAndRelease(vibecoding);
 
-    await waitFor(() => {
-      expect(view.getByText(/voto já registrado/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(view.getByText(/voto já registrado/i)).toBeInTheDocument();
+      },
+      { timeout: 3_000 },
+    );
     expect(routerState.push).not.toHaveBeenCalled();
   }, 5_000);
 
@@ -134,9 +140,12 @@ describe.skip("polls.vote — full user flow (live demo target)", () => {
     const vibecoding = view.getByRole("button", { name: /vibecoding/i });
     await holdAndRelease(vibecoding);
 
-    await waitFor(() => {
-      expect(view.getByText(/voto já registrado/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(view.getByText(/voto já registrado/i)).toBeInTheDocument();
+      },
+      { timeout: 3_000 },
+    );
 
     expect(view.getByRole("button", { name: /vibecoding/i })).toBeDisabled();
     expect(

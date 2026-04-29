@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "biome lint .",
     "type-check": "tsc --noEmit",
-    "test": "bun test"
+    "test:vote": "bun test modules/polls/components/__tests__/VoteScreen.vote.test.tsx",
+    "test:rest": "bun test modules/polls/__tests__ modules/polls/components/__tests__/HoldButton.test.tsx modules/polls/components/__tests__/ResultStage.test.tsx modules/polls/components/__tests__/StageView.test.tsx",
+    "test": "bun run test:rest && bun run test:vote"
   },
   "dependencies": {
     "@duopool/api": "workspace:*",
