@@ -4,7 +4,7 @@ import { motion } from "@duopool/motion";
 import { fadeUp } from "@duopool/motion/variants";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useVote, VOTE_NOT_IMPLEMENTED_MESSAGE } from "../api";
+import { useVote } from "../api";
 import { useVoterCookie } from "../hooks/use-voter-cookie";
 import { HoldButton } from "./HoldButton";
 
@@ -20,7 +20,7 @@ interface VoteScreenProps {
 }
 
 interface MessageState {
-  kind: "demo-pending" | "error";
+  kind: "already-voted" | "error";
   text: string;
 }
 
@@ -29,25 +29,30 @@ export function VoteScreen({ poll }: VoteScreenProps) {
   const voterId = useVoterCookie();
   const vote = useVote();
   const [message, setMessage] = useState<MessageState | null>(null);
+  const [committed, setCommitted] = useState(false);
 
   const cookieReady = voterId !== null;
-  const disabled = !cookieReady || vote.isPending;
+  const disabled = !cookieReady || vote.isPending || committed;
 
   async function handleCommit(optionId: string) {
+    if (!voterId) {
+      return;
+    }
     setMessage(null);
     try {
-      await vote.mutateAsync({ pollId: poll.id, pollOptionId: optionId });
-      router.push(`/poll/${poll.slug}/result`);
+      const result = await vote.mutateAsync({
+        slug: poll.slug,
+        pollOptionId: optionId,
+      });
+      setCommitted(true);
+      if (result.status === "ok") {
+        router.push(`/poll/${poll.slug}/result`);
+      } else {
+        setMessage({ kind: "already-voted", text: "Voto já registrado" });
+      }
     } catch (error) {
       const text =
         error instanceof Error ? error.message : "Erro ao registrar voto.";
-      if (text === VOTE_NOT_IMPLEMENTED_MESSAGE) {
-        setMessage({
-          kind: "demo-pending",
-          text: "Votação ao vivo: este botão será ligado durante a talk.",
-        });
-        return;
-      }
       setMessage({ kind: "error", text });
     }
   }
@@ -91,7 +96,7 @@ export function VoteScreen({ poll }: VoteScreenProps) {
           aria-live="polite"
           data-message-kind={message.kind}
           className={
-            message.kind === "demo-pending"
+            message.kind === "already-voted"
               ? "text-sm text-muted-foreground"
               : "text-sm text-destructive"
           }
