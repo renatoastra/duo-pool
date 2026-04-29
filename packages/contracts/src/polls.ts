@@ -7,8 +7,6 @@ import { z } from "zod";
 
 // Layer 4 — oRPC contracts. Frontend-importable. ZERO server imports
 // (only @orpc/contract + zod + drizzle-zod schemas, no pg, no Drizzle client).
-//
-// IMPORTANT: pollsContract.vote is reserved for the live demo — see CLAUDE.md.
 
 const pollWithOptionsSchema = selectPollSchema.extend({
   options: z.array(selectPollOptionSchema),
@@ -49,16 +47,19 @@ export const pollsContract = {
     .input(z.object({ slug: z.string().min(1) }))
     .output(z.object({ voted: z.boolean() })),
 
-  // ⚠️ RESERVED FOR LIVE DEMO — DO NOT IMPLEMENT IN SCAFFOLD
-  // vote: oc
-  //   .route({ method: "POST", path: "/polls/{slug}/vote" })
-  //   .input(z.object({
-  //     slug: z.string().min(1),
-  //     pollOptionId: z.string().uuid(),
-  //     voterCookie: z.string().min(1),
-  //   }))
-  //   .output(z.discriminatedUnion("status", [
-  //     z.object({ status: z.literal("ok") }),
-  //     z.object({ status: z.literal("alreadyVoted") }),
-  //   ])),
+  vote: oc
+    .route({ method: "POST", path: "/polls/{slug}/vote" })
+    .input(
+      z.object({
+        slug: z.string().min(1),
+        pollOptionId: z.string().uuid(),
+        voterCookie: z.string().min(1),
+      }),
+    )
+    .output(
+      z.discriminatedUnion("status", [
+        z.object({ status: z.literal("ok") }),
+        z.object({ status: z.literal("alreadyVoted") }),
+      ]),
+    ),
 };

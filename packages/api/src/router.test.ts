@@ -9,7 +9,7 @@ describe("L5 router shape", () => {
     expect(router.polls.hasVoted).toBeDefined();
   });
 
-  test("does NOT expose polls.vote — reserved for live demo", () => {
-    expect("vote" in router.polls).toBe(false);
+  test("exposes polls.vote", () => {
+    expect(router.polls.vote).toBeDefined();
   });
 });

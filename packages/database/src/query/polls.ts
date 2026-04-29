@@ -4,9 +4,6 @@ import { pollOptions, polls, votes } from "../schema/polls.ts";
 
 // Layer 3 — Pure DB functions. Each takes db as the first argument.
 // No business rules here. No side effects beyond db.
-//
-// IMPORTANT: castVote() is reserved for the live demo (`/duo.exec polls.vote`).
-// It is intentionally NOT implemented in this scaffold — see CLAUDE.md.
 
 export async function listPolls(db: Database) {
   return db
@@ -113,10 +110,28 @@ export async function getUserVote(
   return rows[0]?.pollOptionId ?? null;
 }
 
-// ⚠️ RESERVED FOR LIVE DEMO — DO NOT IMPLEMENT IN SCAFFOLD
-// export async function castVote(db: Database, input: { pollId: string; pollOptionId: string; voterCookie: string })
-//   : Promise<{ ok: true } | { alreadyVoted: true }>
-// Implementation must:
-//   1. Insert into votes
-//   2. Catch PG error 23505 (unique_violation) on (voter_cookie, poll_id) → return { alreadyVoted: true }
-//   3. Return { ok: true } on success
+export async function castVote(
+  db: Database,
+  input: { pollId: string; pollOptionId: string; voterCookie: string },
+): Promise<{ ok: true } | { alreadyVoted: true }> {
+  try {
+    await db.insert(votes).values({
+      pollId: input.pollId,
+      pollOptionId: input.pollOptionId,
+      voterCookie: input.voterCookie,
+    });
+    return { ok: true };
+  } catch (error) {
+    // ADR-003: UNIQUE (voter_cookie, poll_id) is the source of truth — let
+    // the constraint speak (no SELECT pre-check) and translate 23505 here.
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code: unknown }).code === "23505"
+    ) {
+      return { alreadyVoted: true };
+    }
+    throw error;
+  }
+}
